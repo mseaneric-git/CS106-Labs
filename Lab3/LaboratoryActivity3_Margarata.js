@@ -1,7 +1,7 @@
 // Sean Eric A. Margarata
 // Student-Id: 2024-01-13038
 
-let base=8
+let base=8;
 
 // Problem 1: Grade Calculator
 console.log("Grade Calulator\n");
@@ -87,3 +87,4 @@ function multiplicationTable(n){
 }
 
 multiplicationTable(base);
+
