@@ -3,6 +3,9 @@ let inventory = [{name: "Sample Item", qty: 10, price: 5.99}];
 let damagedItems = [];
 let isTable = true;
 
+//Current view of inventory (for filtering/searching)
+let currView = [...inventory];
+
 //Log inventory to console
 console.log("Inventory Init:", inventory);
 
@@ -34,6 +37,7 @@ function addItem() {
     inventory.push(newItem);
 
     resetForm();
+    currView = [...inventory];
     renderList();
     renderSummary();
     console.log("Added Item:", newItem);
@@ -46,13 +50,15 @@ function resetForm() {
     document.getElementById('item-price').value = '';
 }
 
-function renderList(items = inventory) {
+function renderList(items = currView) {
   const list = document.getElementById('inventory-list');
   list.innerHTML = '';
-  if (inventory.length === 0) {
+  
+  if (items.length === 0) {
     list.innerHTML = '<p>No items in inventory.</p>';
     return;
   }
+  
   if (isTable) {
     const tableContainer = document.createElement('table');
     const header = `
@@ -118,6 +124,7 @@ function editQty(index) {
   }
   
   inventory[index].qty = parsed;
+  currView = [...inventory];
   renderList();
   renderSummary();
   console.log("Edited Qty:", inventory[index]);
@@ -136,6 +143,7 @@ function editPrice(index) {
   }
 
   inventory[index].price = parsed;
+  currView = [...inventory];
   renderList();
   renderSummary();
   console.log("Edited Price:", inventory[index]);
@@ -160,6 +168,7 @@ function editName(index) {
   }
 
   inventory[index].name = trimmed;
+  currView = [...inventory];
   renderList();
   console.log("Edited Name:", inventory[index]);
   console.log("Inventory (After Edit):", inventory);
@@ -168,6 +177,7 @@ function editName(index) {
 function deleteItem(index) {
   if (!confirm(`Are you sure you want to delete "${inventory[index].name}"?`)) return;
   inventory.splice(index, 1);
+  currView = [...inventory];
   renderList();
   renderSummary();
   console.log("Inventory (After Deletion):", inventory);
@@ -203,7 +213,8 @@ function markDamaged(index) {
       }
       return 0;
     });
-    
+   
+    currView = [...inventory];
     renderList();
     renderDamaged();
     renderSummary();
@@ -219,7 +230,7 @@ function renderDamaged(items = damagedItems) {
     list.innerHTML = '';
 
     if (damagedItems.length === 0) {
-      list.innerHTML = '<p>No Damaged Item(s).</p>';
+      list.innerHTML = '<p>No damaged item(s).</p>';
       return;
     }
 
@@ -278,21 +289,20 @@ function editDamaged(index) {
   if (newQty === null) return;
 
   const parsed = parseInt(newQty);
-  const curItemName = damagedItems[index].name;
   const curDamagedQty = damagedItems[index].qty;
 
-  if (isNaN(parsed) || parsed < 0 || parsed > damagedItems[index].qty) {
+  if (isNaN(parsed) || parsed < 0 || parsed > curDamagedQty) {
     alert("Invalid input. Edit cancelled.");
     return;
   }
 
   const inventoryIndex = inventory.findIndex(i => i.name === damagedItems[index].name);
 
-  if (parsed === damagedItems[index].qty) {
+  if (parsed === curDamagedQty) {
     return;
   }
 
-  if (parsed ===0) {
+  if (parsed === 0) {
       deleteDamaged(index);
       return;
   }
@@ -344,12 +354,25 @@ function toggleView() {
 }
 
 function filterItems() {
-  const threshold = parseInt(document.getElementById('filter-qty').value);
-  if (isNaN(threshold)) return;
-  const filtered = inventory.filter(i => i.qty <= threshold);
-  renderList(filtered);
+  const threshold = document.getElementById('filter-qty').value;
+  const thresholdValue = parseInt(threshold);
 
-  console.log("Filtered Items (Qty <= " + threshold + "):", filtered);
+  if (threshold === '' || isNaN(thresholdValue)) return;
+  const filtered = inventory.filter(i => i.qty <= thresholdValue);
+
+  currView = filtered;
+  renderList(currView);
+  document.getElementById('filter-qty').value = '';
+
+  console.log("Filtered Items (Qty <= " + thresholdValue + "):", filtered);
+}
+
+function resetFilter() {
+  currView = [...inventory];
+  document.getElementById('filter-qty').value = '';
+  document.getElementById('search').value = '';
+  renderList(currView);
+  console.log("Filters reset. Showing all items.");
 }
 
 function searchItems() {
@@ -357,25 +380,32 @@ function searchItems() {
   const query = document.getElementById('search').value.toLowerCase();
   let result;
 
-  if (searchType === 'name') {
-    result = inventory.filter(item => item.name.toLowerCase().includes(query));
-  }
-  else if (searchType === 'qty') {
-    result = inventory.filter(item => item.qty.toString().includes(query));
-  }
-  else if (searchType === 'price') {
-    result = inventory.filter(item => item.price.toString().includes(query));
+  if (query.trim() === '') {
+    renderList(currView);
+    return;
   }
 
-  console.log("Search Results for '" + query + "' in " + searchType + ":", result);
+  if (searchType === 'name') {
+    result = currView.filter(item => item.name.toLowerCase().includes(query));
+  }
+  else if (searchType === 'qty') {
+    result = currView.filter(item => item.qty.toString().includes(query));
+  }
+  else if (searchType === 'price') {
+    result = currView.filter(item => item.price.toString().includes(query));
+  }
+
   renderList(result);
+
+  console.log("Search Results for '" + query + "' in " + searchType + ":", result);
 }
 
 function sortItems(key) {
   const sortMethod = document.getElementById('sort-method').value;
   const isDescending = sortMethod === '1';
 
-  inventory.sort((a, b) => {
+  // Sort the currView array
+  currView.sort((a, b) => {
     let result = 0;
 
     if (key === 'name') {
@@ -384,7 +414,7 @@ function sortItems(key) {
       if (nameA < nameB) {
         result = -1;
       }
-      if (nameA > nameB) {
+      else if (nameA > nameB) {
         result = 1;
       }
     } else if (key === 'qty' || key === 'price') {
@@ -393,7 +423,9 @@ function sortItems(key) {
 
     return isDescending ? result * -1 : result;
   });
+  
   renderList();
+  console.log("Sorted by " + key + " (" + (isDescending ? "Descending" : "Ascending") + ")");
 }
 
 function sortByName() {
@@ -408,39 +440,49 @@ function sortByPrice() {
   sortItems('price');
 }
 
-function renderSummary() {
+// Helper function to calculate summary statistics
+function calculateSummary() {
   const totalItems = inventory.length;
   const totalQty = inventory.reduce((sum, i) => sum + i.qty, 0);
   const totalValue = inventory.reduce((sum, i) => sum + i.qty * i.price, 0);
-  const totalDamaged = damagedItems.length;
+  const totalDamagedQty = damagedItems.reduce((sum, d) => sum + d.qty, 0);
   const totalLoss = damagedItems.reduce((sum, d) => sum + d.qty * d.price, 0);
   const netValue = totalValue - totalLoss;
 
-  document.getElementById('total-items').textContent = totalItems;
-  document.getElementById('total-qty').textContent = totalQty;
-  document.getElementById('total-value').textContent = totalValue.toFixed(2);
-  document.getElementById('total-damaged').textContent = totalDamaged;
-  document.getElementById('total-loss').textContent = totalLoss.toFixed(2);
-  document.getElementById('net-value').textContent = netValue.toFixed(2);
+  return {
+    totalItems,
+    totalQty,
+    totalValue,
+    totalDamagedQty,
+    totalLoss,
+    netValue
+  };
+}
+
+function renderSummary() {
+  const summary = calculateSummary();
+
+  document.getElementById('total-items').textContent = summary.totalItems;
+  document.getElementById('total-qty').textContent = summary.totalQty;
+  document.getElementById('total-value').textContent = summary.totalValue.toFixed(2);
+  document.getElementById('total-damaged').textContent = summary.totalDamagedQty;
+  document.getElementById('total-loss').textContent = summary.totalLoss.toFixed(2);
+  document.getElementById('net-value').textContent = summary.netValue.toFixed(2);
 }
 
 function summaryReport() {
-  const totalItems = inventory.length;
-  const totalQty = inventory.reduce((sum, i) => sum + i.qty, 0);
-  const totalValue = inventory.reduce((sum, i) => sum + i.qty * i.price, 0);
-  const totalDamaged = damagedItems.length;
-  const totalLoss = damagedItems.reduce((sum, d) => sum + d.qty * d.price, 0);
-  const netValue = totalValue - totalLoss;
+  const summary = calculateSummary();
 
   const report =
     `Inventory Summary Report:\n` +
-    `Total Unique Items: ${totalItems}\n` +
-    `Total Quantity: ${totalQty}\n` +
-    `Total Inventory Value: ₱${totalValue.toFixed(2)}\n` +
-    `Total Damaged Items: ${totalDamaged}\n` +
-    `Total Loss: ₱${totalLoss.toFixed(2)}\n` +
-    `Net Value: ₱${netValue.toFixed(2)}`;
+    `Total Unique Items: ${summary.totalItems}\n` +
+    `Total Quantity: ${summary.totalQty}\n` +
+    `Total Inventory Value: ₱${summary.totalValue.toFixed(2)}\n` +
+    `Total Damaged Items: ${summary.totalDamagedQty}\n` +
+    `Total Loss: ₱${summary.totalLoss.toFixed(2)}\n` +
+    `Net Value: ₱${summary.netValue.toFixed(2)}`;
 
+  alert(report);
   console.log(report);
   return report;
 }
