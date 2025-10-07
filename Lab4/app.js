@@ -278,21 +278,32 @@ function editDamaged(index) {
   if (newQty === null) return;
 
   const parsed = parseInt(newQty);
+  const curItemName = damagedItems[index].name;
+  const curDamagedQty = damagedItems[index].qty;
 
   if (isNaN(parsed) || parsed < 0 || parsed > damagedItems[index].qty) {
     alert("Invalid input. Edit cancelled.");
     return;
   }
-  else if (parsed === damagedItems[index].qty) {
+
+  const inventoryIndex = inventory.findIndex(i => i.name === damagedItems[index].name);
+
+  if (parsed === damagedItems[index].qty) {
     return;
   }
-  else if (parsed ===0) {
+
+  if (parsed ===0) {
       deleteDamaged(index);
+      return;
   }
-  else{
-    damagedItems[index].qty = parsed;
-    inventory[index].qty += parsed;
+  
+  const qtyReturned = curDamagedQty - parsed;
+
+  if (inventoryIndex !== -1) {
+    inventory[inventoryIndex].qty += qtyReturned;
   }
+
+  damagedItems[index].qty = parsed;
 
   renderDamaged();
   renderList();
@@ -304,12 +315,16 @@ function editDamaged(index) {
 }
 
 function deleteDamaged(index) {
-  if (!confirm(`Are you sure you want to delete "${damagedItems[index].name}" from damaged items?`)) return;
+  const itemToDelete = damagedItems[index];
+  if (!confirm(`Are you sure you want to delete "${itemToDelete.name}" from damaged items?`)) return;
 
-  const qtyToDelete = damagedItems[index].qty;
+  const qtyToDelete = itemToDelete.qty;
+  const inventoryIndex = inventory.findIndex(i => i.name === damagedItems[index].name);
+  
+  if (inventoryIndex !== -1) {
+    inventory[inventoryIndex].qty += qtyToDelete;
+  }
 
-  inventory[index].qty += qtyToDelete;
-    
   damagedItems.splice(index, 1);
 
   renderDamaged();
