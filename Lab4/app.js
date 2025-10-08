@@ -371,7 +371,7 @@ function filterItems() {
   const thresholdValue = parseInt(threshold);
 
   if (thresholdValue < 0) {
-    alert("Threshold cannot be negative.");
+    alert("Quantity filter cannot be negative.");
     return;
   }
 
