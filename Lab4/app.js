@@ -1,12 +1,14 @@
-//Empty array
-let inventory = [{name: "Sample Item", qty: 10, price: 5.99}];
+//Empty arrays
+let inventory = [];
 let damagedItems = [];
+
+//Initialize table view (will be used for switching table and card view)
 let isTable = true;
 
-//Current view of inventory (for filtering/searching)
+//Current view of inventory (for filtering/searching/sorting). This is to prevent direct modification on inventory array
 let currView = [...inventory];
 
-//Log inventory to console
+//Log initial inventory to console
 console.log("Inventory Init:", inventory);
 
 //Item constructor
@@ -16,6 +18,7 @@ function itemObject(name, qty, price) {
     this.price = price;
 }
 
+//Add item function
 function addItem() {
     const name = document.getElementById('item-name').value.trim();
     const qty = parseInt(document.getElementById('item-qty').value);
@@ -44,12 +47,14 @@ function addItem() {
     console.log("Inventory (After Adding Item):", inventory);
 }
 
+//Reset function
 function resetForm() {
     document.getElementById('item-name').value = '';
     document.getElementById('item-qty').value = '';
     document.getElementById('item-price').value = '';
 }
 
+//Render inventory list function
 function renderList(items = currView) {
   const list = document.getElementById('inventory-list');
   list.innerHTML = '';
@@ -112,6 +117,7 @@ function renderList(items = currView) {
   }
 }
 
+//Edit item quantity in inventory function
 function editQty(index) {
   const newQty = prompt("Enter new quantity:", inventory[index].qty);
   if (newQty === null) return;
@@ -150,6 +156,7 @@ function editPrice(index) {
   console.log("Inventory (After Edit):", inventory);
 }
 
+//Edit item name in inventory function
 function editName(index) {
   const newName = prompt("Enter new name:", inventory[index].name);
   if (newName === null) return;
@@ -174,6 +181,7 @@ function editName(index) {
   console.log("Inventory (After Edit):", inventory);
 }
 
+//Delete item in inventory function
 function deleteItem(index) {
   if (!confirm(`Are you sure you want to delete "${inventory[index].name}"?`)) return;
   inventory.splice(index, 1);
@@ -183,6 +191,7 @@ function deleteItem(index) {
   console.log("Inventory (After Deletion):", inventory);
 }
 
+//Mark item as damaged function
 function markDamaged(index) {
   const damagedItem = prompt("Enter quantity of damaged items:", 1);
   if (damagedItem === null) return;
@@ -225,6 +234,7 @@ function markDamaged(index) {
   }
 }
 
+//Render damaged list
 function renderDamaged(items = damagedItems) {
     const list = document.getElementById('damaged-list');
     list.innerHTML = '';
@@ -284,6 +294,7 @@ function renderDamaged(items = damagedItems) {
     }
 }
 
+//Edit item quantity in damaged function
 function editDamaged(index) {
   const newQty = prompt("Enter new quantity:", damagedItems[index].qty);
   if (newQty === null) return;
@@ -324,6 +335,7 @@ function editDamaged(index) {
   console.log("Inventory (After Editing Damaged):", inventory);
 }
 
+//Delete damaged item function
 function deleteDamaged(index) {
   const itemToDelete = damagedItems[index];
   if (!confirm(`Are you sure you want to delete "${itemToDelete.name}" from damaged items?`)) return;
@@ -345,7 +357,7 @@ function deleteDamaged(index) {
   console.log("Inventory (After Deleting Damaged):", inventory);
 }
 
-
+//Toggle view function
 function toggleView() {
     isTable = !isTable;
 
@@ -353,6 +365,7 @@ function toggleView() {
     renderDamaged();
 }
 
+//Filter function
 function filterItems() {
   const threshold = document.getElementById('filter-qty').value;
   const thresholdValue = parseInt(threshold);
@@ -367,6 +380,7 @@ function filterItems() {
   console.log("Filtered Items (Qty <= " + thresholdValue + "):", filtered);
 }
 
+//Reset filter funciton
 function resetFilter() {
   currView = [...inventory];
   document.getElementById('filter-qty').value = '';
@@ -375,6 +389,7 @@ function resetFilter() {
   console.log("Filters reset. Showing all items.");
 }
 
+//Search function
 function searchItems() {
   const searchType = document.getElementById('search-type').value;
   const query = document.getElementById('search').value.toLowerCase();
@@ -400,6 +415,7 @@ function searchItems() {
   console.log("Search Results for '" + query + "' in " + searchType + ":", result);
 }
 
+//Sort item function
 function sortItems(key) {
   const sortMethod = document.getElementById('sort-method').value;
   const isDescending = sortMethod === '1';
@@ -428,14 +444,17 @@ function sortItems(key) {
   console.log("Sorted by " + key + " (" + (isDescending ? "Descending" : "Ascending") + ")");
 }
 
+//Sort by name function
 function sortByName() {
   sortItems('name');
 }
 
+//Sort by quantity function
 function sortByQuantity() {
   sortItems('qty');
 }
 
+//Sort by price function
 function sortByPrice() {
   sortItems('price');
 }
@@ -459,6 +478,7 @@ function calculateSummary() {
   };
 }
 
+//Render summary function
 function renderSummary() {
   const summary = calculateSummary();
 
@@ -470,6 +490,7 @@ function renderSummary() {
   document.getElementById('net-value').textContent = summary.netValue.toFixed(2);
 }
 
+//Summary report (console report) function
 function summaryReport() {
   const summary = calculateSummary();
 
@@ -487,6 +508,7 @@ function summaryReport() {
   return report;
 }
 
+//Init
 renderList();
 renderDamaged();
 renderSummary();
