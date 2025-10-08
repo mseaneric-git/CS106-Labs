@@ -370,6 +370,11 @@ function filterItems() {
   const threshold = document.getElementById('filter-qty').value;
   const thresholdValue = parseInt(threshold);
 
+  if (thresholdValue < 0) {
+    alert("Threshold cannot be negative.");
+    return;
+  }
+
   if (threshold === '' || isNaN(thresholdValue)) return;
   const filtered = inventory.filter(i => i.qty <= thresholdValue);
 
